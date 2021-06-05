@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: s3-echo-with-irsa
+spec:
+  template:
+    metadata:
+      labels:
+        app: s3-echo-with-irsa
+    spec:
+      serviceAccountName: events-consumer-svc-accnt
+      containers:
+      - name: s3-echo-with-irsa-container
+        image: amazon/aws-cli:latest
+        args: ["s3", "ls"]
+      restartPolicy: Never

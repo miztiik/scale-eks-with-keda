@@ -1,0 +1,16 @@
+kind: HorizontalPodAutoscaler
+apiVersion: autoscaling/v2beta1
+metadata:
+  name: sales-events-consumer-scaler
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1beta1
+    kind: Deployment
+    name: sales-events-consumer
+  minReplicas: 1
+  maxReplicas: 50
+  metrics:
+  - type: External
+    external:
+      metricName: reliable-queue-length
+      targetAverageValue: 1000

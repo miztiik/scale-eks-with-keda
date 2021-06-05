@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales-events-producer
+  namespace: sales-events-producer-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sales-events-producer
+  template:
+    metadata:
+      labels:
+        app: sales-events-producer
+    spec:
+      containers:
+        - name: sales-events-producer
+          image: 'python:3.8.10-alpine'
+          command:
+            - sh
+            - '-c'
+          args:
+            - >-
+              wget
+              https://raw.githubusercontent.com/miztiik/event-processor-on-eks/master/stacks/back_end/eks_sqs_consumer_stack/lambda_src/stream_data_consumer.py;pip3 install --user boto3;python3 stream_data_consumer.py;
+          env:
+            - name: STORE_EVENTS_BKT
+              value: YOUR_BKT_NAME
+            - name: S3_PREFIX
+              value: sales_events
+            - name: RELIABLE_QUEUE_NAME
+              value: reliable_message_q
+            - name: AWS_REGION
+              value: us-east-1
+            - name: MAX_MSGS_PER_BATCH
+              value: '5'
+            - name: MSG_POLL_BACKOFF
+              value: '2'
+            - name: MSG_PROCESS_DELAY
+              value: '10'
+            - name: TOT_MSGS_TO_PROCESS
+              value: '1000'

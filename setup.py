@@ -9,17 +9,17 @@ setuptools.setup(
     name="scale_eks_with_keda",
     version="0.0.1",
 
-    description="An empty CDK Python app",
+    description="scale-eks-with-keda",
     long_description=long_description,
     long_description_content_type="text/markdown",
 
     author="author",
 
-    package_dir={"": "scale_eks_with_keda"},
-    packages=setuptools.find_packages(where="scale_eks_with_keda"),
+    package_dir={"": "stacks"},
+    packages=setuptools.find_packages(where="stack"),
 
     install_requires=[
-        "aws-cdk.core==1.103.0",
+        "aws-cdk.core==1.106.1",
     ],
 
     python_requires=">=3.6",
