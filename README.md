@@ -288,7 +288,7 @@ In this demo, let us see, how we can use KEDA to autoscale our consumer pods bas
 
    - **Deploy SQS Consumer Scalar**
 
-     Now that we have all the necessary pieces to deploy our _consumer_ scaler. Here is my manifest for the scalar.The same yaml is also in the repo under the directory `keda_scalers/keda-sqs-consumer-scalar-with-irsa.yml` Let us walk through the specification.
+     Now that we have all the necessary pieces to deploy our _consumer_ scaler. Here is my manifest for the scalar.The same yaml is also in the repo under the directory `stacks/back_end/keda_scalers/keda-sqs-consumer-scalar-with-irsa.yml` Let us walk through the specification.
 
      ```yaml
      ---
@@ -335,111 +335,39 @@ In this demo, let us see, how we can use KEDA to autoscale our consumer pods bas
      **Deploy KEDA Scalar**:
 
      ```sh
-     kubectl apply -f keda_scalers/keda-sqs-consumer-scalar-with-irsa.yml
+     $] kubectl apply -f stacks/back_end/keda_scalers/keda-sqs-consumer-scalar-with-irsa.yml
+     scaledobject.keda.sh/sales-events-consumer-scaler created
      ```
+
+     That is it!. We have setup our _consumer_ to scale automatically based on custom metrics. Let us check if everything is working as expected.
 
 1. ## 🔬 Testing the solution
 
-   As the producer and consumer deployments will be automatically started by the kubernetes cluster. First we will setup our kubectl context to interact with our cluster.
+   As the producer and consumer deployments will be automatically started by the kubernetes cluster. We can check the scalar in action using the following commands. You can watch the scaler in action,
 
-   1. **Connect To EKS Cluster**:
-
-      In the output section of the `eks-cluster-stack` stack, you will find the kubeconfig command. In my case, it was named `c1eventprocessorConfigCommand5B72EE8D`. Assuming you have the AWS CLI already configured in your terminal, run this command,
+   1. **Check Consumer Scalar**:
 
       ```bash
-      # Set kubeconfig
-      aws eks update-kubeconfig \
-        --name c_1_event_processor \
-        --region us-east-1 \
-        --role-arn arn:aws:iam::111122223333:role/eks-cluster-stack-cAdminRole655A13CE-1UF4YPRXZBHE
-
-      # Verify if the new cluster contexts is setup correctly
-      kubectl config get-contexts
-      # You should see and asterix(*) left of new cluster
-
-      # List nodes
-      kubectl get nodes
+      $]kubectl get hpa -w -n sales-events-consumer-ns
+      NAME                                    REFERENCE                          TARGETS           MINPODS   MAXPODS   REPLICAS   AGE
+      keda-hpa-sales-events-consumer-scaler   Deployment/sales-events-consumer   22500m/50 (avg)   1         50        4          5m18s
+      keda-hpa-sales-events-consumer-scaler   Deployment/sales-events-consumer   22250m/50 (avg)   1         50        4          5m21s
+      keda-hpa-sales-events-consumer-scaler   Deployment/sales-events-consumer   29667m/50 (avg)   1         50        3          5m37s
       ```
 
-      Expected Output,
+      Another way to check the events,
 
       ```bash
-      NAME                          STATUS   ROLES    AGE     VERSION
-      ip-10-10-0-176.ec2.internal   Ready    <none>   2d22h   v1.18.9-eks-d1db3c
-      ip-10-10-1-194.ec2.internal   Ready    <none>   2d22h   v1.18.9-eks-d1db3c
+      kubectl get events -n sales-events-consumer-ns | grep horizontalpodautoscaler
+      12m         Normal   SuccessfulRescale   horizontalpodautoscaler/keda-hpa-sales-events-consumer-scaler   New size: 4; reason: external metric AWS-SQS-Queue-reliable_message_q(&LabelSelector{MatchLabels:map[string]string{scaledObjectName: sales-events-consumer-scaler,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+      15m         Normal   SuccessfulRescale   horizontalpodautoscaler/keda-hpa-sales-events-consumer-scaler   New size: 3; reason: All metrics below target
+      5m12s       Normal   SuccessfulRescale   horizontalpodautoscaler/keda-hpa-sales-events-consumer-scaler   New size: 3; reason: All metrics below target
+      4m10s       Normal   SuccessfulRescale   horizontalpodautoscaler/keda-hpa-sales-events-consumer-scaler   New size: 2; reason: All metrics below target
+      3m55s       Normal   SuccessfulRescale   horizontalpodautoscaler/keda-hpa-sales-events-consumer-scaler   New size: 3; reason: external metric AWS-SQS-Queue-reliable_message_q(&LabelSelector{MatchLabels:map[string]string{scaledObjectName: sales-events-consumer-scaler,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
+      97s         Normal   SuccessfulRescale   horizontalpodautoscaler/keda-hpa-sales-events-consumer-scaler   New size: 4; reason: external metric AWS-SQS-Queue-reliable_message_q(&LabelSelector{MatchLabels:map[string]string{scaledObjectName: sales-events-consumer-scaler,},MatchExpressions:[]LabelSelectorRequirement{},}) above target
       ```
 
-      ```bash
-      # Verify Namespaces
-      kubectl get namespaces
-      ```
-
-      Expected Output,
-
-      ```bash
-      NAME STATUS AGE
-      default Active 2d22h
-      kube-node-lease Active 2d22h
-      kube-public Active 2d22h
-      kube-system Active 2d22h
-      sales-events-consumer-ns Active 18h
-      sales-events-producer-ns Active 40h
-      ```
-
-      ```bash
-      # [OPTIONAL]Incase you want to play around starting a vanilla os on your shiny new cluster
-      # Launch vanilla OS
-      kubectl run -it $RANDOM --image=python:3.8.10-alpine --restart=Never
-
-      # [OPTIONAL CLEANUP, WHEN YOU ARE DONE TESTING]
-      # Delete Contexts
-      # kubectl config delete-context Cluster_Name_1
-
-      ```
-
-      You may face an error on the AWS GUI. For example, _You may not be able to see workloads or nodes in your AWS Management Console_.
-      Make sure you using the same user/role you used to deploy the cluster. If they are different then you need to update the console user to kubernetes configmap. This doc[6] has the instructions for the same
-
-   1. **Check Sales Events Producer**:
-      Our deployment of the producer should already be running and producing messages to our queue.
-
-      ```bash
-      kubectl get deployments -n sales-events-producer-ns
-      ```
-
-      Expected Output,
-
-      ```bash
-      NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
-      sales-events-producer   1/1     1            1           40h
-      ```
-
-      ```bash
-      kubectl get pods -n sales-events-producer-ns
-      ```
-
-      Expected Output,
-
-      ```bash
-      NAME                                     READY   STATUS    RESTARTS   AGE
-      sales-events-producer-86856f74fb-76j29   1/1     Running   1          38h
-      ```
-
-      In case you are wondering, if you want get hold of the deployment YAML, then you can generate the same,
-
-      ```bash
-      kubectl get pod sales-events-producer-86856f74fb-76j29 -n sales-events-producer-ns -o yaml
-      ```
-
-   1. **Check SQS Queue**:
-
-      It is much easier to check the incoming messages in the console than through the CLI. I have been running my cluster for quite some time. Here in the below screenshot, you can notice that there is `1` message in flight(being processed)
-
-      ![Miztiik Automation: Event Processor On EKS Architecture](images/miztiik_automation_event_processor_on_eks_architecture_01.png)
-
-      In this screenshot you can notice that the maximum age of any new message is around less then a minute and the averages around ~ `15` seconds
-
-      ![Miztiik Automation: Event Processor On EKS Architecture](images/miztiik_automation_event_processor_on_eks_architecture_02.png)
+      You may face an error on the AWS GUI. For example, _You may not be able to see workloads or nodes in your AWS Management Console_. Make sure you using the same user/role you used to deploy the cluster. If they are different then you need to update the console user to kubernetes configmap.
 
    1. **Check Sales Events Consumer**:
       Our deployment of the consumer should already be running and consuming messages from our queue and writing them to our S3 bucket `SalesEventsBucket`.
@@ -448,41 +376,40 @@ In this demo, let us see, how we can use KEDA to autoscale our consumer pods bas
       kubectl get deployments -n sales-events-consumer-ns
       ```
 
-      Expected Output,
+      _Expected Output_,
 
       ```bash
+      $]kubectl get deployments -n sales-events-consumer-ns
       NAME                    READY   UP-TO-DATE   AVAILABLE   AGE
-      sales-events-consumer   1/1     1            1           18h
+      sales-events-consumer   3/3     3
       ```
 
       ```bash
       kubectl get pods -n sales-events-consumer-ns
       ```
 
-      Expected Output,
+      _Expected Output_,
 
       ```bash
       NAME                                     READY   STATUS    RESTARTS   AGE
-      sales-events-consumer-6dd6f69c46-fhchs   1/1     Running   13         18h
+      sales-events-consumer-67c774c996-4smnw   1/1     Running   0          10m
+      sales-events-consumer-67c774c996-94svr   1/1     Running   0          3h10m
+      sales-events-consumer-67c774c996-9m4wb   1/1     Running   0          98m
       ```
 
-      In case you are wondering, if you want get hold of the deployment YAML, then you can generate the same,
+   1. **Check SQS Queue**:
 
-      ```bash
-      kubectl get pod sales-events-consumer-6dd6f69c46-fhchs -n sales-events-consumer-ns -o yaml
-      ```
+      You can also check the SQS console to verify the scaling in action. Check out the `Monitoring` tab of your queue. I have been running my cluster for quite some time with the scalar in action. Your view might be different than the one shown here, Here in the below screenshot, you can notice that the total number messages does not increase beyond a level as the scalar starts more _consumers_ to process those messages.
+
+      ![Miztiik Automation: Event Processor On EKS Architecture](images/miztiik_automation_scale_eks_with_keda_architecture_01.png)
 
    1. **Check S3 Data Bucket for processed events**:
 
-      Navigate to `SalesEventsBucket` in S3 Console, Here you can notice that the events are stored under two prefixes `sale_event` or `inventory_event`. As an example, here under the `inventory_event` prefix you will find the files received by our consumer function
-
-      ![Miztiik Automation: Event Processor On EKS Architecture](images/miztiik_automation_event_processor_on_eks_architecture_03.png)
-
-      You can use S3 select to view the files or download them and view them locally.
+      Navigate to `SalesEventsBucket` in S3 Console, Here you can notice that the events are stored under two prefixes `sale_event` or `inventory_event`. As an example, here under the `inventory_event` prefix you will find the files received by our consumer function. You can use S3 select to view the files or download them and view them locally.
 
 1. ## 📒 Conclusion
 
-   Here we have demonstrated how to use kubernetes for producing and consuming events. As KEDA also exposes metrics to Prometheus, You can extend this solution to easily scrape the KEDA metrics to Prometheus and monitor them accordingly.
+   Here we have demonstrated how to use KEDA to scale our kubernetes deployments using customer metrics events. As KEDA also exposes metrics to Prometheus, You can extend this solution to easily scrape the KEDA metrics to Prometheus and monitor them accordingly.
 
 1. ## 🧹 CleanUp
 
@@ -508,7 +435,7 @@ In this demo, let us see, how we can use KEDA to autoscale our consumer pods bas
 
 ## 📌 Who is using this
 
-This repository aims to show how to use AWS EKS to new developers, Solution Architects & Ops Engineers in AWS. Based on that knowledge these Udemy [course #1][102], [course #2][101] helps you build complete architecture in AWS.
+This repository aims to show how to use KEDA to new developers, Solution Architects & Ops Engineers in AWS. Based on that knowledge these Udemy [course #1][102], [course #2][101] helps you build complete architecture in AWS.
 
 ### 💡 Help/Suggestions or 🐛 Bugs
 
