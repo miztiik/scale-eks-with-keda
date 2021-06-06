@@ -1,4 +1,4 @@
-# Event Processor on Kubernetes(EKS)
+# Event Driven Autoscaling on Kubernetes with KEDA Scalars
 
 The developer at Mystique Unicorn are interested in building their application using event-driven architectural pattern to process streaming data. For those who are unfamiliar, _An event-driven architecture uses events to trigger and communicate between decoupled services and is common in modern applications built with microservices. An event is a change in state, or an update, like an item being placed in a shopping cart on an e-commerce website._
 
