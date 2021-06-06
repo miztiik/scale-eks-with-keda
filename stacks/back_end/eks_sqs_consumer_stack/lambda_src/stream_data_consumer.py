@@ -112,7 +112,7 @@ def get_msgs(q_url, max_msgs, wait_time):
 def process_msgs(msg_batch):
     try:
         m_process_stats = {
-            "msg_batch": len(msg_batch["Messages"]),
+            "msg_batch": len(msg_batch.get("Messages")),
             "s_msgs": 0,
             "f_msgs": 0
         }

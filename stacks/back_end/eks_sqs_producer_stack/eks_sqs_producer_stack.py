@@ -221,3 +221,10 @@ class EksSqsProducerStack(cdk.Stack):
             value=f"https://console.aws.amazon.com/sqs/v2/home?region={cdk.Aws.REGION}#/queues",
             description="Reliable Message Queue"
         )
+
+        output_2 = cdk.CfnOutput(
+            self,
+            "ReliableMessageQueueUrl",
+            value=f"{self.reliable_q.queue_url}",
+            description="Reliable Message Queue Url"
+        )

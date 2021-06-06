@@ -46,7 +46,7 @@ class EksSsmDaemonSetStack(cdk.Stack):
                                 "command": ["/bin/bash"],
                                 "args": [
                                     "-c",
-                                    "echo '* * * * * root yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm & cat >/var/log/miztiik.log <<< `date`:ssm_installation_success;rm -rf /etc/cron.d/ssmstart' > /etc/cron.d/ssmstart && /bin/sleep 15m"
+                                    "echo '* * * * * root yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm & cat >/var/log/miztiik.log <<< `date`:ssm_installation_success;rm -rf /etc/cron.d/ssmstart' > /etc/cron.d/ssmstart && /bin/sleep 60m"
                                 ],
                                 "env":
                                 [

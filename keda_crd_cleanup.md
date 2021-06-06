@@ -14,12 +14,11 @@ helm install keda kedacore/keda \
     --namespace keda
 ```
 
-
 ```sh
 helm list -A
 kubectl get pods -n keda
 kubectl describe pods keda-operator-7d697b9c5b-nvbmj -n keda | grep -i aws   # ensure IRSA annotation working.
-  ```
+```
 
 ## Cleanup Kubernetes CRD(KEDA Resources) Deadlock
 

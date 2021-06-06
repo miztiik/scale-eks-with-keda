@@ -1,16 +1,30 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: m-sqs-secrets
+  namespace: sales-events-consumer-ns
+data:
+  AWS_ACCESS_KEY_ID: QUtJQVRMRFRSWEY=
+  AWS_SECRET_ACCESS_KEY: U1YzazZtdEVkTXUJZOHNTMmJkbA==
+---
 apiVersion: keda.sh/v1alpha1
 kind: TriggerAuthentication
 metadata:
   name: keda-sqs-trigger-auth-aws-credentials
   namespace: sales-events-consumer-ns
 spec:
-  podIdentity:
-    provider: aws-eks
+  secretTargetRef:
+  - parameter: awsAccessKeyID     # Required.
+    name: m-sqs-secrets            # Required.
+    key: AWS_ACCESS_KEY_ID        # Required.
+  - parameter: awsSecretAccessKey # Required.
+    name: m-sqs-secrets            # Required.
+    key: AWS_SECRET_ACCESS_KEY    # Required.
 ---
 apiVersion: keda.sh/v1alpha1 # https://keda.sh/docs/2.0/concepts/scaling-deployments/
 kind: ScaledObject
 metadata:
-  name: sales-events-consumer-scaler-02
+  name: sales-events-consumer-scaler-04
   namespace: sales-events-consumer-ns
   labels:
     app: sales-events-consumer
@@ -28,8 +42,7 @@ spec:
     authenticationRef:
       name: keda-sqs-trigger-auth-aws-credentials
     metadata:
-      queueURL: https://sqs.us-east-2.amazonaws.com/230023004178/reliable_message_q
+      queueURL: https://sqs.us-east-2.amazonaws.com/111122223333/reliable_message_q
       queueLength: "2000"
       awsRegion: "us-east-2"
-      identityOwner: operator
 ---
