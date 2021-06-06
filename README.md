@@ -464,7 +464,7 @@ Thank you for your interest in contributing to our project. Whether it is a bug 
 
 ![miztiik-success-green](https://img.shields.io/badge/Miztiik:Automation:Level-300-orange)
 
-**Level**: 200
+**Level**: 300
 
 [1]: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#support-for-metrics-apis
 [2]: https://github.com/awslabs/k8s-cloudwatch-adapter
