@@ -12,15 +12,13 @@ Can you help them to solve this problem?
 
 ## 🎯 Solutions
 
-Kubernetes has native support metrics APIs<sup>[1]</sup>. We need a mechanism to scale our deployments using custom metrics from say Cloudwatch or message queue length to be fed into this API. There are quite a few ways of doing this, One method is to use AWS Cloudwatch Metrics Adapter <sup>[2],[3]</sup>.
+Kubernetes has native support metrics APIs<sup>[1]</sup>. We need a mechanism to scale our deployments using custom metrics from say Cloudwatch or message queue length to be fed into this API. There are quite a few ways of doing this, One method is to use AWS Cloudwatch Metrics Adapter <sup>[2],[3]</sup>. _Unfortunately, This adapter does not seem to be actively developed anymore. That last commits were 2 years back._
 
-**Introducing KEDA: Kubernetes-based Event-Driven Auto-Scaler**<sup>[4]</sup> - KEDA is a single-purpose, lightweight, open-source component that allows you to easily scale Kubernetes applications based on metrics coming from a variety of cloud providers and other technologies that are not supported out-of-the-box. KEDA works alongside standard Kubernetes components like the HPA and can extend its functionalities by allowing it to scale according to the number of events in the event source.
+**Introducing KEDA: Kubernetes-based Event-Driven Auto-Scaler**<sup>[4]</sup> - KEDA is a single-purpose, lightweight, open-source component that allows you to easily scale Kubernetes applications based on metrics coming from a variety of cloud providers and other technologies that are not supported out-of-the-box. KEDA works alongside standard Kubernetes components like the HPA and can extend its functionalities by allowing it to scale according to the number of events in the event source.In this demo, We will learn how we can use KEDA to auto-scale our _consumer_ pods based on message queue depth.
 
-![Miztiik Automation: Event Processor On EKS Architecture](images/miztiik_automation_event_processor_on_eks_architecture_0.png)
+We will build a EKS cluster with a managed node groups running `2` _t2.medium_ nodes. We will also have a _producer_ deployment writing messages to a SQS queue. A _consumer_ running as deployment will process those messages and store them on S3. Here are the attributes of cluster that are baked into the CDK stacks.
 
-In this demo, let us see, how we can use KEDA to autoscale our consumer pods based on message queue depth. We will build a EKS cluster with a managed node groups running `2` _t2.medium_ nodes. We will also have a _producer_ deployment writing messages to a SQS queue. A _consumer_ running as deployment will process those messages and store them on S3.
-
-- **EKS Cluster** - Our primary cluster router with `2` managed node groups.
+- **EKS Cluster** - Our primary cluster with `2` managed node groups.
 - **SQS Queue** - A standard SQS queue with a visibility timeout of `30` seconds, This allows our consumer `30` seconds to successfully process message and delete them from the queue.
 - **Sales Events Bucket** - Persistent storage for the consumer to store the events.
 - **Producer** - A deployment running an generic container `python:3.8.10-alpine`. The producer code is pulled from this github directly. It will produce `1` message every `2` seconds and runs to produce a maximum of `10000` messages. Being a _deployment_, it will be restarted and goes on to produce the next batch of _10000_ messages.
@@ -184,7 +182,7 @@ In this demo, let us see, how we can use KEDA to autoscale our consumer pods bas
 
        - `MAX_MSGS_PER_BATCH`- Use this to define the maximum number of messages you want to get from the queue for each processing cycle. For example, Set this value to `10`, if you want to process a batch of `10` messages . _Defaults to 5_.
        - `TOT_MSGS_TO_PROCESS` - The maximum number of messages you want to process per pod. The pod exits successfully upon processing the maximum messages. Kubernetes will restart the pod automatically and initiating the next batch of messages to process. _Defaults to `10000`_.
-       - `MSG_POLL_BACKOFF` - Use this to define, how often you want the consumer to poll the SQS queue. This is really important to avoid being throttled by AWS when there are **no messages**. This parameter only comes into effect only when there are no messages in the queue. I have implemented a _crude_ back-off that will double the wait time for each polling cycle. It starts by polling after `2`, `4`, `8`...`512`secs. It goes upto a maximum of `512` and resets to `2` after that. _Defaults to `2`_.
+       - `MSG_POLL_BACKOFF` - Use this to define, how often you want the consumer to poll the SQS queue. This is really important to avoid being throttled by AWS when there are **no messages**. This parameter only comes into effect only when there are no messages in the queue. I have implemented a _crude_ back-off that will double the wait time for each polling cycle. It starts by polling after `2`, `4`, `8`...`512`secs. It goes up to a maximum of `512` and resets to `2` after that. _Defaults to `2`_.
        - `MSG_PROCESS_DELAY` - Use this to define the wait time between messaging processing to simulate realistic behaviour. Set this to `30` if you want to wait `30` seconds between every processing cycle. _Defaults to `10`_
 
      Initiate the deployment with the following command,
@@ -201,7 +199,7 @@ In this demo, let us see, how we can use KEDA to autoscale our consumer pods bas
 
      To do that, we will use this stack to create the following resources,
 
-     - **Namespace**: `keda` - A dedicated namespace for all keda resources.
+     - **Namespace**: `keda` - A dedicated namespace for all KEDA resources.
 
      - **AWS IAM Role**:
 
@@ -262,7 +260,7 @@ In this demo, let us see, how we can use KEDA to autoscale our consumer pods bas
 
      The additional instructions for the security context allows KEDA to use the IRSA mounted secrets, as this is a patch for a known [github issue][6] around mounting secrets and permissions to access them.
 
-     After succesful deployment, confirm your keda operator is able to see the AWS secrets
+     After successful deployment, confirm your KEDA operator is able to see the AWS secrets
 
      ```sh
      helm list -A
@@ -459,6 +457,7 @@ Thank you for your interest in contributing to our project. Whether it is a bug 
 1. [AWS Docs: Amazon SQS metrics][10]
 1. [HELM Docs: Install Helm][11]
 1. [KEDA Docs: AWS SQS Queue Scalar][12]
+1. [Blog: Kubernetes Network Policies][12]
 
 ### 🏷️ Metadata
 
@@ -478,7 +477,7 @@ Thank you for your interest in contributing to our project. Whether it is a bug 
 [10]: https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-available-cloudwatch-metrics.html
 [11]: https://helm.sh/docs/intro/install/
 [12]: https://keda.sh/docs/2.3/scalers/aws-sqs/
-[15]: https://faun.pub/control-traffic-flow-to-and-from-kubernetes-pods-with-network-policies-bc384c2d1f8c
+[13]: https://faun.pub/control-traffic-flow-to-and-from-kubernetes-pods-with-network-policies-bc384c2d1f8c
 [100]: https://www.udemy.com/course/aws-cloud-security/?referralCode=B7F1B6C78B45ADAF77A9
 [101]: https://www.udemy.com/course/aws-cloud-security-proactive-way/?referralCode=71DC542AD4481309A441
 [102]: https://www.udemy.com/course/aws-cloud-development-kit-from-beginner-to-professional/?referralCode=E15D7FB64E417C547579
