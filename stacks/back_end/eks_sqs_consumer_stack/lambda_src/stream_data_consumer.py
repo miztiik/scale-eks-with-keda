@@ -65,10 +65,10 @@ def sqs_polling():
         msg_batch = get_msgs(
             q_url, GlobalArgs.MAX_MSGS_PER_BATCH, GlobalArgs.MSG_POLL_BACKOFF)
 
-        if len(msg_batch) == 0:
-            no_msgs = True
-        else:
+        if msg_batch.get("Messages"):
             no_msgs = False
+        else:
+            no_msgs = True
 
         # polling delay so aws does not throttle us
         time.sleep(GlobalArgs.MSG_PROCESS_DELAY)
@@ -83,9 +83,10 @@ def sqs_polling():
             time.sleep(back_off_secs)
 
         # Process & Delete Messages
-        m_stats = process_msgs(msg_batch)
-        logger.info(f'{{"m_stats":"{json.dumps(m_stats)}"}}')
-        t_msgs += m_stats["msg_batch"]
+        if not no_msgs:
+            m_stats = process_msgs(msg_batch)
+            logger.info(f'{{"m_stats":"{json.dumps(m_stats)}"}}')
+            t_msgs += m_stats["msg_batch"]
 
         # Break if we have processed X Msgs
         if t_msgs >= GlobalArgs.TOT_MSGS_TO_PROCESS:
@@ -132,7 +133,7 @@ def process_msgs(msg_batch):
 
     except Exception as e:
         logger.exception(f"ERROR:{str(e)}")
-        m_process_stats["f_msgs"] += 1
+        # m_process_stats["f_msgs"] += 1
     else:
         return m_process_stats
 
