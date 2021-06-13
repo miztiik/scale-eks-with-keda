@@ -2,7 +2,7 @@
 
 ```sh
 # Ref: https://keda.sh/docs/2.0/deploy/
-KEDA_VERSION=2.0.0
+KEDA_VERSION=2.3.0
 
 helm install keda kedacore/keda \
     --version ${KEDA_VERSION} \
@@ -27,11 +27,11 @@ kubectl describe pods keda-operator-7d697b9c5b-nvbmj -n keda | grep -i aws   # e
 You can refer to KEDA Docs [2]
 
 ```sh
-kubectl delete -f https://github.com/kedacore/keda/releases/download/v2.1.0/keda-2.1.0.yaml
-kubectl delete -f https://raw.githubusercontent.com/kedacore/keda/v2.1.0/config/crd/bases/keda.sh_scaledobjects.yaml
-kubectl delete -f https://raw.githubusercontent.com/kedacore/keda/v2.1.0/config/crd/bases/keda.sh_scaledjobs.yaml
-kubectl delete -f https://raw.githubusercontent.com/kedacore/keda/v2.1.0/config/crd/bases/keda.sh_triggerauthentications.yaml
-kubectl delete -f https://raw.githubusercontent.com/kedacore/keda/v2.1.0/config/crd/bases/keda.sh_clustertriggerauthentications.yaml
+kubectl delete -f https://github.com/kedacore/keda/releases/download/v2.3.0/keda-2.3.0.yaml
+kubectl delete -f https://raw.githubusercontent.com/kedacore/keda/v2.3.0/config/crd/bases/keda.sh_scaledobjects.yaml
+kubectl delete -f https://raw.githubusercontent.com/kedacore/keda/v2.3.0/config/crd/bases/keda.sh_scaledjobs.yaml
+kubectl delete -f https://raw.githubusercontent.com/kedacore/keda/v2.3.0/config/crd/bases/keda.sh_triggerauthentications.yaml
+kubectl delete -f https://raw.githubusercontent.com/kedacore/keda/v2.3.0/config/crd/bases/keda.sh_clustertriggerauthentications.yaml
 ```
 
 ## Try this if custom resources with finalizers can "deadlock"
